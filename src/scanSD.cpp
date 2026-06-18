@@ -3,9 +3,9 @@
 #include <SD.h>
 #include <scanSD.h>
 
-#define SD_CS   5
+#define SD_CS   10
 #define SD_SCK  12
-#define SD_MISO 4
+#define SD_MISO 13
 #define SD_MOSI 11
 
 
@@ -67,8 +67,8 @@ void parseSD(Album *albumList){
       Album nuAlbum;
       String name = album.name();
       int dashIndex = name.indexOf("-");
-      String albumName = name.substring(0, dashIndex);
-      String artistName = name.substring(dashIndex+1);
+      String artistName = name.substring(0, dashIndex);
+      String albumName = name.substring(dashIndex+1);
       albumName.trim();
       artistName.trim();
 
