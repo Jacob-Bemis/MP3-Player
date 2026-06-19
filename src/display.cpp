@@ -96,7 +96,7 @@ void home_screen(Album *albumList, int size){
     drawThickLine(0, 25, 319, 25, 5, orange);
     tft.setTextSize(1.25);
     for (int i = 0; i < size; i++){
-        if (i == albumID){
+        if (i == currentAlbumID){
             tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
         } else{
             tft.setTextColor(ST77XX_WHITE);
@@ -105,12 +105,35 @@ void home_screen(Album *albumList, int size){
         tft.print(albumList[i]->albumName);
     }
 }
-x
-/*Displays an album's tracklist*/
-void album_screen(void);
+    /*Displays an album's tracklist*/
+void album_screen(Album *albumList, int size) {
+    tft.setTextSize(2);
+    tft.setTextColor(ST77XX_WHITE);
+    tft.setCursor(5, 8);
+    tft.print(albumList[currentAlbumID]->albumName);
+    drawThickLine(0, 25, 319, 25, 5, orange);
+    tft.setTextSize(1.25);
+    Song *trackList = albumList[currentAlbumID]->trackList;
+    for (int i = 0; i < size; i++) {
+        if (i == currentSongID){
+            tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
+        } else{
+            tft.setTextColor(ST77XX_WHITE);
+        }
+        tft.setCursor(5, 45 + (i * 20);
+        tft.print(trackList[i]->name);
+    }
+}
 
 /*Displays an error message if it is detected that no SD card is inserted */
-void error_message(void);
+void error_message(void) {
+    tft.setTextSize(2);
+    tft.setTextColor(ST77XX_WHITE);
+    tft.setCursor(5, 8);
+    tft.setTextSize(3);
+    tft.setTextColor(ST77XX_WHITE);
+    tft.print("ERROR: SD card not detected");
+}
 
 // pseudo code for now
 void navigationDisplayTask(Album *albumList, int size){
