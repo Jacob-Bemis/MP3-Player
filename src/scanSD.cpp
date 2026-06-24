@@ -11,7 +11,7 @@
 
 
 int albumCount = 0;
-SPIClass spi(FSPI); 
+//SPIClass spi(FSPI);
 
 int scanTracks(File &file, Album &album){
   int trackCount = 0;
@@ -45,8 +45,8 @@ void parseSD(Album *albumList){
 
   pinMode(SD_CS, OUTPUT);
   digitalWrite(SD_CS, HIGH); 
-  spi.begin(SD_SCK, SD_MISO, SD_MOSI, SD_CS);
-  if (!SD.begin(SD_CS, spi, 1000000)){
+ // spi.begin(SD_SCK, SD_MISO, SD_MOSI, SD_CS);
+  if (!SD.begin(SD_CS, SPI, 1000000)){
     Serial.println("SD Card Failed");
     return;
   }

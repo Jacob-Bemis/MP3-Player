@@ -15,4 +15,4 @@ void album_screen(Album *albumList, int size);
 void error_message(void);
 
 
-#endifx
+#endif
