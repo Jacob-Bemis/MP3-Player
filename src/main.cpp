@@ -18,7 +18,7 @@ void setup() {
     parseSD(albums);
 
 
-    error_message();
+    album_screen(albums, albums[0].trackCount);
 }
 
 

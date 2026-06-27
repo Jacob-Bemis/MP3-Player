@@ -98,25 +98,37 @@ void displayInit(void){
 }
 
 /*Displays the home screen*/
-void home_screen(Album *albumList, int size){
+void home_screen(Album *albumList, int size) {
+    int albumPrint = currentAlbumID - (currentAlbumID % 10);
+    int printLimit = 9;
+    if (((size - albumPrint) + 1) < 10) {
+        printLimit = (size % 10) - 1;
+    }
     tft.setTextSize(2);
     tft.setTextColor(ST77XX_WHITE);
     tft.setCursor(5, 8);
     tft.print("Albums");
     drawThickLine(0, 25, 319, 25, 5, orange);
     tft.setTextSize(1.25);
-    for (int i = 0; i < size; i++){
+    for (int i = 0; i < printLimit; i++){
         if (i == currentAlbumID){
             tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
         } else{
             tft.setTextColor(ST77XX_WHITE);
         }
         tft.setCursor(5, 35 + (i * 10));
-        tft.print(albumList[i].albumName);
+        tft.print(albumList[albumPrint].albumName);
+        albumPrint++;
     }
+    drawThickLine(0, 167, 319, 167, 5, orange);
 }
     /*Displays an album's tracklist*/
 void album_screen(Album *albumList, int size) {
+    int songPrint = currentAlbumID - (currentAlbumID % 10);
+    int printLimit = 9;
+    if (((size - songPrint) + 1) < 10) {
+        printLimit = (size % 10) - 1;
+    }
     tft.setTextSize(2);
     tft.setTextColor(ST77XX_WHITE);
     tft.setCursor(5, 8);
@@ -124,15 +136,18 @@ void album_screen(Album *albumList, int size) {
     drawThickLine(0, 25, 319, 25, 5, orange);
     tft.setTextSize(1.25);
     Song *trackList = albumList[currentAlbumID].trackList;
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < printLimit; i++) {
         if (i == currentSongID){
             tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
         } else{
             tft.setTextColor(ST77XX_WHITE);
         }
-        tft.setCursor(5, 35 + (i * 10));
-        tft.print(trackList[i].name);
+        tft.setCursor(5, 35 + (i * 12));
+        tft.print(trackList[songPrint].name);
+        songPrint++;
     }
+    drawThickLine(0, 167, 319, 167, 5, orange);
+
 }
 
 /*Displays an error message if it is detected that no SD card is inserted */
