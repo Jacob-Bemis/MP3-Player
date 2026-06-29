@@ -3,15 +3,15 @@
 #include <SD.h>
 #include <scanSD.h>
 
-#define SD_CS   5
+#define SD_CS   10
 #define SD_SCK  12
-#define SD_MISO 4
+#define SD_MISO 13
 #define SD_MOSI 11
 
 
 
 int albumCount = 0;
-SPIClass spi(FSPI); 
+//SPIClass spi(FSPI);
 
 int scanTracks(File &file, Album &album){
   int trackCount = 0;
@@ -45,8 +45,8 @@ void parseSD(Album *albumList){
 
   pinMode(SD_CS, OUTPUT);
   digitalWrite(SD_CS, HIGH); 
-  spi.begin(SD_SCK, SD_MISO, SD_MOSI, SD_CS);
-  if (!SD.begin(SD_CS, spi, 1000000)){
+ // spi.begin(SD_SCK, SD_MISO, SD_MOSI, SD_CS);
+  if (!SD.begin(SD_CS, SPI, 1000000)){
     Serial.println("SD Card Failed");
     return;
   }
@@ -67,8 +67,8 @@ void parseSD(Album *albumList){
       Album nuAlbum;
       String name = album.name();
       int dashIndex = name.indexOf("-");
-      String albumName = name.substring(0, dashIndex);
-      String artistName = name.substring(dashIndex+1);
+      String artistName = name.substring(0, dashIndex);
+      String albumName = name.substring(dashIndex+1);
       albumName.trim();
       artistName.trim();
 
