@@ -4,16 +4,18 @@
 #include <SD.h>
 #include <scanSD.h>
 #include <display.h>
+#include "buttons.h"
 Album albums[MAX_ALBUM];
 
 
 
 void setup() {
     Serial.begin(115200);
-   // while (!Serial)
+    //while(!Serial);
     delay(300);
     SPI.begin(12, 13, 11);
     displayInit();
+    buttonInit();
     Serial.println("Parsing");
     parseSD(albums);
 
