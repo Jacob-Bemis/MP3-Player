@@ -2,6 +2,8 @@
 #include "shared_resources.h"
 #include <Arduino.h>
 
+volatile unsigned long lastFireTime[4] = {0, 0, 0, 0};
+
 const int SELECT_BUTTON_PIN = 42;
 const int BACK_BUTTON_PIN = 41;
 const int UP_BUTTON_PIN = 40;
@@ -31,34 +33,46 @@ Btn btns[] = {
 };
 
 void IRAM_ATTR selectButtonHandler() {
-    Serial.println("Select Button Pressed");
+  // Serial.println("Select Button Pressed");
+    unsigned long now = millis();
+    if ((now - lastFireTime[0]) < DEBOUNCE_MS) return;
+    lastFireTime[0] = now;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    button_Events ev = SELECT;
-    xQueueSendFromISR(xButtonEventQueue, &ev, &xHigherPriorityTaskWoken);
+    nav_EVENT ev = EV_SELECT;
+    xQueueSendFromISR(xEventQueue, &ev, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 void IRAM_ATTR backButtonHandler() {
-    Serial.println("Back Button Pressed");
+  // Serial.println("Back Button Pressed");
+    unsigned long now = millis();
+    if ((now - lastFireTime[1]) < DEBOUNCE_MS) return;
+    lastFireTime[1] = now;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    button_Events ev = BACK;
-    xQueueSendFromISR(xButtonEventQueue, &ev, &xHigherPriorityTaskWoken);
+    nav_EVENT ev = EV_BACK;
+    xQueueSendFromISR(xEventQueue, &ev, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 void IRAM_ATTR upButtonHandler() {
-    Serial.println("Up Button Pressed");
+  // Serial.println("Up Button Pressed");
+    unsigned long now = millis();
+    if ((now - lastFireTime[2]) < DEBOUNCE_MS) return;
+    lastFireTime[2] = now;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    button_Events ev = UP;
-    xQueueSendFromISR(xButtonEventQueue, &ev, &xHigherPriorityTaskWoken);
+    nav_EVENT ev = EV_UP;
+    xQueueSendFromISR(xEventQueue, &ev, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 void IRAM_ATTR downButtonHandler() {
-    Serial.println("Down Button Pressed");
+  // Serial.println("Down Button Pressed");
+    unsigned long now = millis();
+    if ((now - lastFireTime[3]) < DEBOUNCE_MS) return;
+    lastFireTime[3] = now;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    button_Events ev = DOWN;
-    xQueueSendFromISR(xButtonEventQueue, &ev, &xHigherPriorityTaskWoken);
+    nav_EVENT ev = EV_DOWN;
+    xQueueSendFromISR(xEventQueue, &ev, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
@@ -98,6 +112,7 @@ bool checkButtonPressed(Btn &b) {
   return false;
 }
 
+/*
 void buttonTask(void *) {
     button_Events bEvent;
     nav_EVENT event;
@@ -136,3 +151,5 @@ void buttonTask(void *) {
       }
     }
     }
+
+    */

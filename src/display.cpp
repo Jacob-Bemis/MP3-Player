@@ -100,9 +100,11 @@ void error_message(void) {
     tft.print("ERROR: SD card   not detected");
 }
 
-void navigationDisplayTask(Album *albumList, int size){
+void navigationDisplayTask(void *pvParameters) {
+    Album *albumList = (Album *) pvParameters;
     nav_State currentState = STATE_HOME;
     nav_EVENT event;
+    home_screen(albumList, albumCount);
     while(1){
         if (xQueueReceive(xEventQueue, &event, portMAX_DELAY) == pdTRUE){
             switch(currentState){
@@ -121,7 +123,8 @@ void navigationDisplayTask(Album *albumList, int size){
                 }else if (event == EV_ERROR) {
                     currentState = STATE_ERROR;
                 }
-                home_screen(albumList, size);
+                tft.fillScreen(gray);
+                home_screen(albumList, albumCount);
                 break;
 
                 case STATE_ALBUM:
@@ -136,11 +139,13 @@ void navigationDisplayTask(Album *albumList, int size){
                       currentSongID--;
                   }else if (event == EV_ERROR) {
                     currentState = STATE_ERROR;
-                }
-                album_screen(albumList, size);
+                  }
+                tft.fillScreen(gray);
+                album_screen(albumList, albumList[currentAlbumID].trackCount);
                 break;
 
                 case STATE_ERROR:
+                tft.fillScreen(gray);
                 error_message();
                 break;
             }
