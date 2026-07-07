@@ -8,7 +8,7 @@
 #include "scanSD.h"
 
 
-void navigationDisplayTask(Album *albumList);
+void navigationDisplayTask(void *pvParameters);
 void displayInit(void);
 void home_screen(Album *albumList, int size);
 void album_screen(Album *albumList, int size);

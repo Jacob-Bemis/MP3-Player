@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 typedef enum {STATE_HOME, STATE_ALBUM, STATE_ERROR} nav_State;
-typedef enum {EV_SELECT, EV_BACK, EV_UP, EV_DOWN, EV_ERROR} nav_EVENT;
+typedef enum { EV_SELECT, EV_BACK, EV_UP, EV_DOWN, EV_ERROR } nav_EVENT;
 
 extern QueueHandle_t xEventQueue;
 extern SemaphoreHandle_t xMutex;
