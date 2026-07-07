@@ -42,8 +42,9 @@ void home_screen(Album *albumList, int size) {
     int albumPrint = currentAlbumID - (currentAlbumID % 10);
     int printLimit = 9;
     if (((size - albumPrint) + 1) < 10) {
-        printLimit = (size % 10) - 1;
+        printLimit = (size % 10);
     }
+    Serial.println(printLimit);
     tft.setTextSize(2);
     tft.setTextColor(ST77XX_WHITE);
     tft.setCursor(5, 8);
@@ -51,7 +52,7 @@ void home_screen(Album *albumList, int size) {
     drawThickLine(0, 25, 319, 25, 5, orange);
     tft.setTextSize(1.25);
     for (int i = 0; i < printLimit; i++){
-        if (i == currentAlbumID){
+        if (i == (currentAlbumID % 10)){
             tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
         } else{
             tft.setTextColor(ST77XX_WHITE);
@@ -64,10 +65,10 @@ void home_screen(Album *albumList, int size) {
 }
     /*Displays an album's tracklist*/
 void album_screen(Album *albumList, int size) {
-    int songPrint = currentAlbumID - (currentAlbumID % 10);
+    int songPrint = currentSongID - (currentSongID % 10);
     int printLimit = 9;
     if (((size - songPrint) + 1) < 10) {
-        printLimit = (size % 10) - 1;
+        printLimit = (size % 10);
     }
     tft.setTextSize(2);
     tft.setTextColor(ST77XX_WHITE);
@@ -77,7 +78,7 @@ void album_screen(Album *albumList, int size) {
     tft.setTextSize(1.25);
     Song *trackList = albumList[currentAlbumID].trackList;
     for (int i = 0; i < printLimit; i++) {
-        if (i == currentSongID){
+        if (i == (currentSongID % 10)){
             tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
         } else{
             tft.setTextColor(ST77XX_WHITE);
@@ -110,38 +111,45 @@ void navigationDisplayTask(void *pvParameters) {
             switch(currentState){
 
                 case STATE_HOME:
+                tft.fillScreen(gray);
                 if (event == EV_SELECT){
-                    currentState = STATE_ALBUM;
+                  currentState = STATE_ALBUM;
+                  album_screen(albumList, albumList[currentAlbumID].trackCount);
                 } else if (event == EV_UP) {
                     if (currentAlbumID != (albumCount -1)){
                       currentAlbumID++;
                     }
+                    home_screen(albumList, albumCount);
                 } else if (event == EV_DOWN) {
                   if (currentAlbumID != 0) {
-                      currentAlbumID--;
+                    currentAlbumID--;
                   }
+                  home_screen(albumList, albumCount);
                 }else if (event == EV_ERROR) {
                     currentState = STATE_ERROR;
+                } else if (event == EV_BACK) {
+                    home_screen(albumList, albumCount);
                 }
-                tft.fillScreen(gray);
-                home_screen(albumList, albumCount);
                 break;
 
                 case STATE_ALBUM:
+                tft.fillScreen(gray);
                 if (event == EV_BACK){
-                    currentState = STATE_HOME;
+                  currentState = STATE_HOME;
+                  home_screen(albumList, albumCount);
                 } else if (event == EV_UP) {
                     if (currentSongID != (albumList[currentAlbumID].trackCount - 1)){
                       currentSongID++;
                     }
+                    album_screen(albumList, albumList[currentAlbumID].trackCount);
                 } else if (event == EV_DOWN) {
                   if (currentSongID != 0) {
-                      currentSongID--;
+                    currentSongID--;
+                  }
+                  album_screen(albumList, albumList[currentAlbumID].trackCount);
                   }else if (event == EV_ERROR) {
                     currentState = STATE_ERROR;
                   }
-                tft.fillScreen(gray);
-                album_screen(albumList, albumList[currentAlbumID].trackCount);
                 break;
 
                 case STATE_ERROR:
@@ -150,6 +158,5 @@ void navigationDisplayTask(void *pvParameters) {
                 break;
             }
         }
-    }
     }
     }
