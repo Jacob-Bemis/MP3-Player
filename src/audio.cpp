@@ -1,20 +1,18 @@
 #include "audio.h"
 #include "../lib/libhelix-mp3/mp3dec.h"
+#include "driver/i2s.h"
 
 #define AMPLITUDE 3000
-#define MAX_SAMPLES 250
 #define FREQUENCY 440
 #define PI  3.14159265358979323846
 
-#define BCLK_PIN 36
-#define LRC_PIN 38
-#define DIN_PIN 37
-#define I2S_PIN_NO_CHANGE 35
+#define BCLK_PIN 48
+#define LRC_PIN 21
+#define DIN_PIN 47
+//#define I2S_PIN_NO_CHANGE 35
 
-int16_t PCM_buffer[MAX_SAMPLES * 2];
 float phase = 0;
 int16_t sample = 0;
-size_t bytes_written;
 
 void i2s_init(void) {
     i2s_config_t i2s_config = {

@@ -1,57 +1,16 @@
 /*
-#include <Arduino.h>
-#include <SPI.h>
-#include <SD.h>
-#include <scanSD.h>
-#include <display.h>
-#include "buttons.h"
-#include "shared_resources.h"
-Album albums[MAX_ALBUM];
-
-
-
-void setup() {
-    Serial.begin(115200);
-//    while(!Serial);
-    delay(300);
-    xEventQueue = xQueueCreate(5, sizeof(nav_EVENT));
-    configASSERT(xEventQueue != NULL);
-    SPI.begin(12, 13, 11);
-    displayInit();
-    buttonInit();
-    Serial.println("Parsing");
-    parseSD(albums);
-
-
-    xTaskCreatePinnedToCore(navigationDisplayTask, "Navigation Display Task",
-4096, &albums, 1, NULL, 0); xTaskCreatePinnedToCore(buttonTask, "Button Task",
-4096, NULL, 2, NULL, 0);
-
-   // album_screen(albums, albums[0].trackCount);
-}
-
-
-void loop() {
-
-}
-*/
-
-#include <Arduino.h>
+ #include <Arduino.h>
 #include "driver/i2s.h"
 #include <cstdint>
 #include <math.h>
 #include "../lib/libhelix-mp3/mp3dec.h"
 #include "audio.h"
 #include "../assets/test_song_data.h"
-#include <SPI.h>
-#include <SD.h>
-#include <scanSD.h>
-#include "shared_resources.h"
-Album albums[MAX_ALBUM];
 
 int frame = 0;
 HMP3Decoder MP3_Decoder;
 int counter = 0;
+unsigned char *MP3_bytes = (unsigned char *)keyboard_test_mp3;
 
 #define MAX_SAMPLES 1152
 int16_t PCM_buffer[MAX_SAMPLES * 2];
@@ -61,27 +20,21 @@ MP3FrameInfo frameInfo;
 void decodeTask(void *param) {
     MP3_Decoder = MP3InitDecoder();
     i2s_init();
-    File mp3File = SD.open("/Music/Jacob - Testing/keyboard_test.mp3");
-    size_t fileSize = mp3File.size();
 
-    unsigned char *mp3Buffer = (unsigned char *)malloc(fileSize);
-    mp3File.read(mp3Buffer, fileSize);
-    mp3File.close();
-    unsigned char *MP3_bytes = mp3Buffer;
-    frame = MP3FindSyncWord(MP3_bytes, fileSize);
+    MP3_bytes = (unsigned char *)keyboard_test_mp3;
+    frame = MP3FindSyncWord(MP3_bytes, keyboard_test_mp3_len);
     if (frame < 0) {
         Serial.println("No sync word found!");
         vTaskDelete(NULL);
     }
     MP3_bytes += frame;
-    counter = fileSize - frame;
+    counter = keyboard_test_mp3_len - frame;
 
     while (counter > 0) {
         Serial.print("Decoding from: ");
         for (int i = 0; i < 8; i++) Serial.printf("%02X ", MP3_bytes[i]);
         Serial.println();
-        int decode_flag = MP3Decode(MP3_Decoder, &MP3_bytes, &counter,
-PCM_buffer, 0);
+        int decode_flag = MP3Decode(MP3_Decoder, &MP3_bytes, &counter, PCM_buffer, 0);
 
         if (decode_flag != 0) {
             Serial.println(decode_flag);
@@ -100,9 +53,8 @@ PCM_buffer, 0);
           }
         }
         int frameBytes = frameInfo.outputSamps *2 * sizeof(int16_t);
-        i2s_write(I2S_NUM_0, PCM_buffer, frameBytes, &bytes_written,portMAX_DELAY);
+        i2s_write(I2S_NUM_0, PCM_buffer, frameBytes, &bytes_written, portMAX_DELAY);
     }
-    free(mp3Buffer);
     Serial.println("Done decoding.");
     vTaskDelete(NULL);
 }
@@ -110,8 +62,15 @@ PCM_buffer, 0);
 void setup() {
     Serial.begin(115200);
     delay(2000);
-    SPI.begin(12, 13, 11);
-    parseSD(albums);
+    Serial.println("1: starting");
+    Serial.println("First bytes of MP3 data:");
+    for (int i = 0; i < 32; i++) {
+        Serial.printf("%02X ", keyboard_test_mp3[i]);
+    }
+    Serial.println();
+    Serial.print("Array length reported: ");
+    Serial.println(keyboard_test_mp3_len);
+
     xTaskCreate(
         decodeTask,     // function
         "decodeTask",   // name
@@ -124,3 +83,5 @@ void setup() {
 
 void loop() {
 }
+
+ */
