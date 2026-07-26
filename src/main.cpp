@@ -49,72 +49,15 @@ void loop() {
 #include "shared_resources.h"
 Album albums[MAX_ALBUM];
 
-int frame = 0;
-HMP3Decoder MP3_Decoder;
-int counter = 0;
-
-#define MAX_SAMPLES 1152
-int16_t PCM_buffer[MAX_SAMPLES * 2];
-size_t bytes_written;
-MP3FrameInfo frameInfo;
-
-void decodeTask(void *param) {
-    MP3_Decoder = MP3InitDecoder();
-    i2s_init();
-    File mp3File = SD.open("/Music/Jacob - Testing/keyboard_test.mp3");
-    size_t fileSize = mp3File.size();
-
-    unsigned char *mp3Buffer = (unsigned char *)malloc(fileSize);
-    mp3File.read(mp3Buffer, fileSize);
-    mp3File.close();
-    unsigned char *MP3_bytes = mp3Buffer;
-    frame = MP3FindSyncWord(MP3_bytes, fileSize);
-    if (frame < 0) {
-        Serial.println("No sync word found!");
-        vTaskDelete(NULL);
-    }
-    MP3_bytes += frame;
-    counter = fileSize - frame;
-
-    while (counter > 0) {
-        Serial.print("Decoding from: ");
-        for (int i = 0; i < 8; i++) Serial.printf("%02X ", MP3_bytes[i]);
-        Serial.println();
-        int decode_flag = MP3Decode(MP3_Decoder, &MP3_bytes, &counter,
-PCM_buffer, 0);
-
-        if (decode_flag != 0) {
-            Serial.println(decode_flag);
-            int resync = MP3FindSyncWord(MP3_bytes, counter);
-            if (resync < 0) break;
-            MP3_bytes += resync;
-            counter -= resync;
-            continue;
-        }
-        MP3GetLastFrameInfo(MP3_Decoder, &frameInfo);
-        // for mono MP3 files
-        if (frameInfo.nChans == 1) {
-          for (int i = frameInfo.outputSamps - 1; i >= 0; i--) {
-            PCM_buffer[i * 2] = PCM_buffer[i];
-            PCM_buffer[i*2 + 1] = PCM_buffer[i];
-          }
-        }
-        int frameBytes = frameInfo.outputSamps *2 * sizeof(int16_t);
-        i2s_write(I2S_NUM_0, PCM_buffer, frameBytes, &bytes_written,portMAX_DELAY);
-    }
-    free(mp3Buffer);
-    Serial.println("Done decoding.");
-    vTaskDelete(NULL);
-}
-
 void setup() {
     Serial.begin(115200);
     delay(2000);
     SPI.begin(12, 13, 11);
     parseSD(albums);
+    i2s_init();
     xTaskCreate(
-        decodeTask,     // function
-        "decodeTask",   // name
+        mp3PlaybackTask,     // function
+        "mp3PlaybackTask",   // name
         16384,          // stack size in bytes — generously larger than default
         NULL,           // param
         1,              // priority
