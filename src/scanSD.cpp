@@ -46,7 +46,7 @@ void parseSD(Album *albumList){
   pinMode(SD_CS, OUTPUT);
   digitalWrite(SD_CS, HIGH); 
  // spi.begin(SD_SCK, SD_MISO, SD_MOSI, SD_CS);
-  if (!SD.begin(SD_CS, SPI, 1000000)){
+  if (!SD.begin(SD_CS, SPI, 90000000)){
     Serial.println("SD Card Failed");
     return;
   }

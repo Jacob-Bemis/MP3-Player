@@ -1,10 +1,13 @@
 #include "audio.h"
 #include "../lib/libhelix-mp3/mp3dec.h"
 #include "driver/i2s.h"
+#include <string.h>
+#include <Arduino.h>
+#include <SD.h>
 
 #define AMPLITUDE 3000
 #define FREQUENCY 440
-#define PI  3.14159265358979323846
+//#define PI  3.14159265358979323846
 
 #define BCLK_PIN 48
 #define LRC_PIN 21
@@ -25,6 +28,8 @@ int16_t sample = 0;
 #define BUFFER_SIZE 0x00001000
 #define REFRESH_THRESHOLD 0x00000A00
 unsigned char ringBuffer[BUFFER_SIZE];
+bool fileDone = false;
+int frameBytes;
 
 void i2s_init(void) {
     i2s_config_t i2s_config = {
@@ -49,17 +54,17 @@ void i2s_init(void) {
 
 void mp3PlaybackTask(void *param) {
     MP3_Decoder = MP3InitDecoder();
-    File mp3File = SD.open("/Music/Jacob - Testing/keyboard_test.mp3");
+    File mp3File = SD.open("/Music/Swans - Soundtracks for the Blind/1-12-animus.mp3");
     size_t fileSize = mp3File.size();
     size_t fileSizeCount = fileSize;
     int index = 0;
-    while ((index + 1) <= BUFFER_SIZE || (index + 1) <= fileSize){
-      char mp3_byte = (char)mp3File.read();
-      ringBuffer[index] = mp3_byte;
+    while ((index + 1) <= BUFFER_SIZE && (index + 1) <= fileSize){
+      int mp3_byte = mp3File.read();
+      ringBuffer[index] = (unsigned char) mp3_byte;
       index++;
     }
     unsigned char *read_pointer = ringBuffer;
-    frame = MP3FindSyncWord(read_pointer, BUFFER_SIZE);
+    frame = MP3FindSyncWord(read_pointer, index);
     if (frame < 0) {
         Serial.println("No sync word found!");
         vTaskDelete(NULL);
@@ -68,16 +73,17 @@ void mp3PlaybackTask(void *param) {
     counter = index - frame;
 
     while (counter > 0) {
-      /*TODO: fix logic for keeping track of the number of bytes left in an mp3
-  file. I cant think rn. :(
-      */
-      fileSizeCount -= (fileSizeCount - counter);
-      if (counter == (BUFFER_SIZE - REFRESH_THRESHOLD) && fileSize > BUFFER_SIZE) {
-          memmove(read_pointer, ringBuffer, counter);
-          index = counter + 1;
-          while ((index + 1) <= BUFFER_SIZE || (index + 1) <= fileSize){
-              mp3_byte = (char)mp3File.read();
-              ringBuffer[index] = mp3_byte;
+      //fileSizeCount -= (fileSizeCount - counter);
+      if (!fileDone && counter <= (BUFFER_SIZE - REFRESH_THRESHOLD) && fileSize > BUFFER_SIZE) {
+          memmove(ringBuffer, read_pointer, counter);
+          index = counter;
+          while ((index + 1) <= BUFFER_SIZE) {
+            int mp3_byte = mp3File.read();
+            if (mp3_byte == -1) {
+                fileDone = true;
+                break;
+            }
+              ringBuffer[index] = (unsigned char) mp3_byte;
               index++;
           }
           read_pointer = ringBuffer;
@@ -95,18 +101,18 @@ PCM_buffer, 0);
             continue;
         }
         MP3GetLastFrameInfo(MP3_Decoder, &frameInfo);
+        frameBytes = frameInfo.outputSamps * sizeof(int16_t);
         // for mono MP3 files
         if (frameInfo.nChans == 1) {
           for (int i = frameInfo.outputSamps - 1; i >= 0; i--) {
             PCM_buffer[i * 2] = PCM_buffer[i];
             PCM_buffer[i*2 + 1] = PCM_buffer[i];
           }
+          frameBytes = frameInfo.outputSamps * 2 * sizeof(int16_t);
         }
-        int frameBytes = frameInfo.outputSamps *2 * sizeof(int16_t);
         i2s_write(I2S_NUM_0, PCM_buffer, frameBytes, &bytes_written,portMAX_DELAY);
     }
     mp3File.close();
-    free(mp3Buffer);
     Serial.println("Done decoding.");
     vTaskDelete(NULL);
 }
