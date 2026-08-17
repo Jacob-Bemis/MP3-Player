@@ -4,6 +4,8 @@
 #include <string.h>
 #include <Arduino.h>
 #include <SD.h>
+#include "scanSD.h"
+#include "shared_resources.h"
 
 #define AMPLITUDE 3000
 #define FREQUENCY 440
@@ -25,8 +27,8 @@ MP3FrameInfo frameInfo;
 
 float phase = 0;
 int16_t sample = 0;
-#define BUFFER_SIZE 0x00001000
-#define REFRESH_THRESHOLD 0x00000A00
+#define BUFFER_SIZE 0x00001400
+#define REFRESH_THRESHOLD 0x00000C00
 unsigned char ringBuffer[BUFFER_SIZE];
 bool fileDone = false;
 int frameBytes;
@@ -52,9 +54,16 @@ void i2s_init(void) {
 
 }
 
-void mp3PlaybackTask(void *param) {
-    MP3_Decoder = MP3InitDecoder();
-    File mp3File = SD.open("/Music/Swans - Soundtracks for the Blind/1-12-animus.mp3");
+void mp3PlaybackTask(void *pvParameters) {
+  MP3_Decoder = MP3InitDecoder();
+  Album *albumList = (Album *)pvParameters;
+  while (1){
+    uint32_t ulNotificationValue = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    // semaphore
+  if (ulNotificationValue > 0 && mp3Playing) {
+
+    // Add semaphores
+    File mp3File = SD.open(albumList[currentAlbumPlaying].trackList[currentTrackPlaying].songFilePath);
     size_t fileSize = mp3File.size();
     size_t fileSizeCount = fileSize;
     int index = 0;
@@ -71,9 +80,10 @@ void mp3PlaybackTask(void *param) {
     }
     read_pointer += frame;
     counter = index - frame;
-
+    // mp3 file decoding loop
     while (counter > 0) {
-      //fileSizeCount -= (fileSizeCount - counter);
+      // fileSizeCount -= (fileSizeCount - counter);
+      if (audio_Interrupt){break;}
       if (!fileDone && counter <= (BUFFER_SIZE - REFRESH_THRESHOLD) && fileSize > BUFFER_SIZE) {
           memmove(ringBuffer, read_pointer, counter);
           index = counter;
@@ -113,6 +123,17 @@ PCM_buffer, 0);
         i2s_write(I2S_NUM_0, PCM_buffer, frameBytes, &bytes_written,portMAX_DELAY);
     }
     mp3File.close();
-    Serial.println("Done decoding.");
-    vTaskDelete(NULL);
+    // vTaskDelete(NULL);
+    if (audio_Interrupt) {
+        audio_Interrupt = false;
+    } else{
+      currentTrackPlaying++;
+      }
+    if (currentTrackPlaying > albumList[currentAlbumPlaying].trackCount) {
+        currentTrackPlaying = 0;
+        currentAlbumPlaying = 0;
+        mp3Playing = false;
+    }
+  }
+  }
 }

@@ -16,6 +16,7 @@
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 uint16_t gray = tft.color565(160, 160, 160); // RGB (0–255)
 uint16_t orange = tft.color565(255, 165, 0);
+bool audioInit = false;
 
 
 void drawThickLine(int x0, int y0, int x1, int y1, int thicnss, uint16_t color) {
@@ -100,6 +101,7 @@ void error_message(void) {
     tft.setTextColor(ST77XX_WHITE);
     tft.print("ERROR: SD card   not detected");
 }
+/*TODO: Add binary semaphores to preserve currentAlbumID and currentSongID*/
 
 void navigationDisplayTask(void *pvParameters) {
     Album *albumList = (Album *) pvParameters;
@@ -149,6 +151,19 @@ void navigationDisplayTask(void *pvParameters) {
                   album_screen(albumList, albumList[currentAlbumID].trackCount);
                   }else if (event == EV_ERROR) {
                     currentState = STATE_ERROR;
+                  } else if (event == EV_SELECT) {
+                    // put binary semaphores
+                    if (!audioInit){
+                      xTaskNotifyGive(xAudioPlaybackTask);
+                      audioInit = true;
+                    }else if (mp3Playing){
+                    /*TODO: add a binary semaphore to preserve audio_interupt and mp3Playing . it is a shared resource*/
+                    audio_Interrupt = true;
+                    }
+                    mp3Playing = true;
+                    currentAlbumPlaying = currentAlbumID;
+                    currentTrackPlaying = currentSongID;
+
                   }
                 break;
 

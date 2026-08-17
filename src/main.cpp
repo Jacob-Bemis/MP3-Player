@@ -8,8 +8,6 @@
 #include "shared_resources.h"
 Album albums[MAX_ALBUM];
 
-
-
 void setup() {
     Serial.begin(115200);
 //    while(!Serial);
