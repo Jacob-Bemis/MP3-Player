@@ -61,22 +61,22 @@ void buttonTask(void *) {
 
               case SELECT_BUTTON_PIN:
               ev = EV_SELECT;
-              xQueueSend(xEventQueue, &ev, 0);
+              xQueueSend(xNavEventQueue, &ev, 0);
               break;
 
               case BACK_BUTTON_PIN:
               ev = EV_BACK;
-              xQueueSend(xEventQueue, &ev, 0);
+              xQueueSend(xNavEventQueue, &ev, 0);
               break;
 
               case UP_BUTTON_PIN:
               ev = EV_UP;
-              xQueueSend(xEventQueue, &ev, 0);
+              xQueueSend(xNavEventQueue, &ev, 0);
               break;
 
               case DOWN_BUTTON_PIN:
               ev = EV_DOWN;
-              xQueueSend(xEventQueue, &ev, 0);
+              xQueueSend(xNavEventQueue, &ev, 0);
               break;
           }
         }

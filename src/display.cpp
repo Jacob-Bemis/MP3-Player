@@ -109,7 +109,7 @@ void navigationDisplayTask(void *pvParameters) {
     nav_EVENT event;
     home_screen(albumList, albumCount);
     while(1){
-        if (xQueueReceive(xEventQueue, &event, portMAX_DELAY) == pdTRUE){
+        if (xQueueReceive(xNavEventQueue, &event, portMAX_DELAY) == pdTRUE){
             switch(currentState){
 
                 case STATE_HOME:
@@ -157,13 +157,18 @@ void navigationDisplayTask(void *pvParameters) {
                       xTaskNotifyGive(xAudioPlaybackTask);
                       audioInit = true;
                     }else if (mp3Playing){
-                    /*TODO: add a binary semaphore to preserve audio_interupt and mp3Playing . it is a shared resource*/
-                    audio_Interrupt = true;
-                    }
+                      /*TODO: add a binary semaphore to preserve audio_interupt
+                       * and mp3Playing . it is a shared resource*/
+                    playback_EVENT ev = EV_STOP;
+                    xQueueSend(xPlayEventQueue, &ev, 0);
+                    if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE){
                     mp3Playing = true;
                     currentAlbumPlaying = currentAlbumID;
                     currentTrackPlaying = currentSongID;
-
+                    xSemaphoreGive(xMutex);
+                    }
+                    vTaskDelay(pdMS_TO_TICKS(10));
+                    }
                   }
                 break;
 

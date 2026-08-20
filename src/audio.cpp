@@ -57,13 +57,17 @@ void i2s_init(void) {
 void mp3PlaybackTask(void *pvParameters) {
   MP3_Decoder = MP3InitDecoder();
   Album *albumList = (Album *)pvParameters;
+  playback_EVENT event;
   while (1){
     uint32_t ulNotificationValue = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-    // semaphore
   if (ulNotificationValue > 0 && mp3Playing) {
 
     // Add semaphores
+     if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE){
     File mp3File = SD.open(albumList[currentAlbumPlaying].trackList[currentTrackPlaying].songFilePath);
+    xSemaphoreGive(xMutex);
+    }
+    vTaskDelay(pdMS_TO_TICKS(10));
     size_t fileSize = mp3File.size();
     size_t fileSizeCount = fileSize;
     int index = 0;
@@ -83,7 +87,13 @@ void mp3PlaybackTask(void *pvParameters) {
     // mp3 file decoding loop
     while (counter > 0) {
       // fileSizeCount -= (fileSizeCount - counter);
-      if (audio_Interrupt){break;}
+      if (xQueueReceive(xPlayEventQueue, &event, portMAX_DELAY) == pdTRUE) {
+        if (event == EV_STOP) {
+            audio_Interrupt == true;
+            break;
+        }
+
+      }
       if (!fileDone && counter <= (BUFFER_SIZE - REFRESH_THRESHOLD) && fileSize > BUFFER_SIZE) {
           memmove(ringBuffer, read_pointer, counter);
           index = counter;

@@ -5,8 +5,10 @@
 
 typedef enum {STATE_HOME, STATE_ALBUM, STATE_ERROR} nav_State;
 typedef enum { EV_SELECT, EV_BACK, EV_UP, EV_DOWN, EV_ERROR } nav_EVENT;
+typedef enum { EV_STOP, EV_PAUSE } playback_EVENT;
 
-extern QueueHandle_t xEventQueue;
+extern QueueHandle_t xNavEventQueue;
+extern QueueHandle_t xPlayEventQueue;
 extern SemaphoreHandle_t xMutex;
 
 extern int currentAlbumID; // Identifies what index in the album list
